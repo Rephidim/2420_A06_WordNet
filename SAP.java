@@ -1,7 +1,9 @@
 package main;
 
+import edu.princeton.cs.algs4.DepthFirstDirectedPaths;
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.DirectedCycle;
+import edu.princeton.cs.algs4.Stack;
 
 public class SAP {
 	private final Digraph G;
@@ -30,7 +32,11 @@ public class SAP {
 	 * @return
 	 */
 	public boolean isRootedDAG() {
-		return false;
+		int roots = 0;
+		for (int i = 0; i < G.V(); i++) {
+			if (!G.adj(i).iterator().hasNext()) roots++;
+		}
+		return roots == 1;
 	}
 	
 	/**
@@ -43,7 +49,23 @@ public class SAP {
 	public int length(int v, int w) {
 		if (v < 0 || v > G.V() -1) throw new IndexOutOfBoundsException("Vertex v is not between 0 and G.V() -1");
 		if (w < 0 || w > G.V() -1) throw new IndexOutOfBoundsException("Vertex w is not between 0 and G.V() -1");
-		return 0;
+		if (!isRootedDAG()) throw new IllegalArgumentException("Use a rooted DAG");
+		int root = 0;
+		int L = -1;
+		for (int i = 0; i < G.V(); i++) {
+			if (!G.adj(i).iterator().hasNext()) root = i;
+		}
+		Stack<Integer> vStack = (Stack<Integer>)new DepthFirstDirectedPaths(G,v).pathTo(root);
+		Stack<Integer> wStack = (Stack<Integer>)new DepthFirstDirectedPaths(G,w).pathTo(root);
+		
+		while (!vStack.isEmpty()) {
+			if (vStack.peek() == wStack.peek()) {
+				vStack.pop();
+				wStack.pop();
+			} else break;
+		}
+		L = vStack.size() + wStack.size();
+		return L;
 	}
 	
 	/**
@@ -57,7 +79,23 @@ public class SAP {
 	public int ancestor(int v, int w) {
 		if (v < 0 || v > G.V() -1) throw new IndexOutOfBoundsException("Vertex v is not between 0 and G.V() -1");
 		if (w < 0 || w > G.V() -1) throw new IndexOutOfBoundsException("Vertex w is not between 0 and G.V() -1");
-		return 0;
+		
+		int root = 0;
+		for (int i = 0; i < G.V(); i++) {
+			if (!G.adj(i).iterator().hasNext()) root = i;
+		}
+		Stack<Integer> vStack = (Stack<Integer>)new DepthFirstDirectedPaths(G,v).pathTo(root);
+		Stack<Integer> wStack = (Stack<Integer>)new DepthFirstDirectedPaths(G,w).pathTo(root);
+		
+		int ca = -1;
+		while (!vStack.isEmpty()) {
+			if (vStack.peek() == wStack.peek()) {
+				ca = vStack.peek();
+				vStack.pop();
+				wStack.pop();
+			} else break;
+		}
+		return ca;
 	}
 	
 	/**
