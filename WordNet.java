@@ -1,12 +1,15 @@
 package main;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
 
 public class WordNet {
 	private HashMap<Integer,String[]> synMap;
+	private HashMap<String, Set<Integer>> wordToID = new HashMap<String, Set<Integer>>();
 	private final Digraph G;
 
 	/**
@@ -32,9 +35,26 @@ public class WordNet {
 	private void initSynMap(In in, String delim) {
 		synMap = new HashMap<Integer, String[]>();
 		String tempSplit = " ";
+		String[] stringArray;
+		int x;
+		HashSet<Integer> hs;
 		while (in.hasNextLine()) {
+			// builds synMap
 			String[] holder = in.readLine().split(delim);
-			synMap.put(Integer.parseInt(holder[0]), holder[1].split(tempSplit));
+			stringArray = holder[1].split(tempSplit);
+			x = Integer.parseInt(holder[0]);
+			synMap.put(x, stringArray);
+			
+			// builds wordToID
+			for (String n : stringArray) {
+				if (wordToID.containsKey(n)) {
+					wordToID.get(n).add(x);
+				} else {
+					hs = new HashSet<Integer>();
+					hs.add(x);
+					wordToID.put(n, hs);
+				}
+			}
 		}
 	}
 	
@@ -63,7 +83,9 @@ public class WordNet {
 	 * returns all WordNet nouns
 	 */
 	public Iterable<String> nouns() {
-		return null;
+		if (!synMap.isEmpty()) {
+			return wordToID.keySet();
+		} else return null;
 	}
 	
 	/**
@@ -74,7 +96,7 @@ public class WordNet {
 	 */
 	public boolean isNoun(String word) {
 		if (word == null) throw new NullPointerException("Args cannot be null");
-		return false;
+		return wordToID.containsKey(word);
 	}
 	
 	/**
@@ -104,7 +126,9 @@ public class WordNet {
 	
 	public static void main(String[] args) {
 		WordNet w = new WordNet("synsets.txt","hypernyms.txt");
-		System.out.println(w.synMap.toString());
+		for (String s : w.nouns()) {
+			System.out.println(s);
+		};
 	}
 	
 }
