@@ -11,6 +11,7 @@ public class WordNet {
 	private HashMap<Integer,String[]> synMap;
 	private HashMap<String, Set<Integer>> wordToID = new HashMap<String, Set<Integer>>();
 	private final Digraph G;
+	private final SAP sap;
 
 	/**
 	 * Constructor takes the name of two input files.
@@ -26,6 +27,10 @@ public class WordNet {
 		
 		initSynMap(in, delim);
 		G = initHyps(hypernyms);
+		sap = new SAP(G);
+		if (!sap.isRootedDAG()) {
+			throw new IllegalArgumentException("Must create a rootedDAG");
+		}
 	}
 
 	/**
@@ -108,7 +113,10 @@ public class WordNet {
 	 */
 	public int distance(String nounA, String nounB) {
 		if (nounA == null || nounB == null) throw new NullPointerException("Args cannot be null");
-		return 0;
+		if (!isNoun(nounA) || !isNoun(nounB)) {
+			throw new IllegalArgumentException("tried to make sap with not nouns");
+		}
+		return sap.length(wordToID.get(nounA), wordToID.get(nounB));
 	}
 	
 	/**
@@ -121,14 +129,22 @@ public class WordNet {
 	 */
 	public String sap(String nounA, String nounB) {
 		if (nounA == null || nounB == null) throw new NullPointerException("Args cannot be null");
-		return null;
+		if (!isNoun(nounA) || !isNoun(nounB)) {
+			throw new IllegalArgumentException("tried to make sap with not nouns");
+		}
+		Set<Integer> wordIDA = wordToID.get(nounA);
+		Set<Integer> wordIDB = wordToID.get(nounB);
+		int commonA = sap.ancestor(wordIDA, wordIDB);
+		StringBuilder sb = new StringBuilder();
+		for (String s : synMap.get(commonA)) {
+			sb.append(s + " ");
+		}
+		return sb.toString();
 	}
 	
 	public static void main(String[] args) {
 		WordNet w = new WordNet("synsets.txt","hypernyms.txt");
-		for (String s : w.nouns()) {
-			System.out.println(s);
-		};
+		System.out.println(w.sap("abulia", "absurd"));
 	}
 	
 }
